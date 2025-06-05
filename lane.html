@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <title>หัวใจหมุนกลางจอพร้อมพื้นหลังหัวใจลอย</title>
+  <style>
+    html, body {
+      margin: 0; padding: 0; height: 100%; overflow: hidden;
+      background: radial-gradient(circle at center, #ffdde1, #ee9ca7);
+    }
+    canvas {
+      display: block;
+      position: absolute;
+      top: 0; left: 0;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="bg"></canvas>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ canvas: document.querySelector('#bg'), antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.position.z = 12;
+
+    // แสง
+    const light = new THREE.PointLight(0xffffff, 1);
+    light.position.set(10, 10, 10);
+    scene.add(light);
+    scene.add(new THREE.AmbientLight(0xffc3dc, 0.8));
+
+    // สร้างรูปหัวใจ
+    function createHeart() {
+      const shape = new THREE.Shape();
+      shape.moveTo(0, 0);
+      shape.bezierCurveTo(0, 0, -1, -1, -2, 0);
+      shape.bezierCurveTo(-3, 1.5, -1.5, 3, 0, 4);
+      shape.bezierCurveTo(1.5, 3, 3, 1.5, 2, 0);
+      shape.bezierCurveTo(1, -1, 0, 0, 0, 0);
+
+      const geometry = new THREE.ExtrudeGeometry(shape, {
+        depth: 1,
+        bevelEnabled: true,
+        bevelThickness: 0.3,
+        bevelSize: 0.2,
+        bevelSegments: 10
+      });
+      const material = new THREE.MeshPhongMaterial({ color: 0xff1493, shininess: 100 });
+      return new THREE.Mesh(geometry, material);
+    }
+
+    // หัวใจใหญ่ตรงกลาง
+    const centerHeart = createHeart();
+    centerHeart.position.set(0, 0, 0);
+    scene.add(centerHeart);
+
+    // หัวใจเล็กพื้นหลังลอยขึ้น
+    const bgHearts = [];
+    for(let i = 0; i < 50; i++) {
+      const h = createHeart();
+      h.scale.setScalar(0.1 + Math.random() * 0.15);
+      h.position.set(
+        (Math.random() - 0.5) * 40,
+        (Math.random() - 0.5) * 30 - 10,
+        (Math.random() - 0.5) * 20
+      );
+      h.material = new THREE.MeshPhongMaterial({ color: 0xff69b4, transparent: true, opacity: 0.6 });
+      scene.add(h);
+      bgHearts.push(h);
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      // หมุนหัวใจใหญ่
+      centerHeart.rotation.y += 0.01;
+      centerHeart.rotation.x += 0.005;
+
+      // หัวใจเล็กลอยขึ้นเรื่อย ๆ และวนกลับด้านล่าง
+      bgHearts.forEach(h => {
+        h.position.y += 0.02;
+        h.rotation.z += 0.01;
+        if(h.position.y > 20) {
+          h.position.y = -20;
+          h.position.x = (Math.random() - 0.5) * 40;
+          h.position.z = (Math.random() - 0.5) * 20;
+        }
+      });
+
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth/window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>
